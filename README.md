@@ -32,6 +32,6 @@ When you click the "Deploy to Azure" button, you will be taken to the Azure port
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsgiovinetti%2FCortanaWorkshopPrereqDeployment%2Fmaster%2FazuredeploywithVPN.json)
 
-After the deployment you need to install [this client certificate](https://github.com/sgiovinetti/CortanaWorkshopPrereqDeployment/raw/master/cortanademoclient.pfx) in your certificate store and download the VPN client. 
+After the deployment you need to install [this client certificate](https://github.com/sgiovinetti/CortanaWorkshopPrereqDeployment/raw/master/cortanademoclient.pfx) in your certificate store using Pwd: cortanademo 
 
-The VPN client should be downloaded from Azure in the blade of the Virtual Network Gateway in the section "Point-to-Site configuration" clicking on the menu "Download VPN client".
+After that you need to download the VPN client from Azure in the blade of the Virtual Network Gateway in section "Point-to-Site configuration" clicking on the menu "Download VPN client".
