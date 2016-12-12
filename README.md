@@ -27,3 +27,11 @@ When you click the "Deploy to Azure" button, you will be taken to the Azure port
 * **Location** - This is the location of your Resource Group. 
 * **App Name** - This should be a short (10 or fewer characters), but unique string that will be a prefix to all of the resources deployed. For example, if you type in *smithcis*, your Spark cluster will be called *smithcisspark* and your Lab VM will be called *smithcislab*.
 * **Deployment Location** - The default deployment location for the resources needed for the workshop.
+
+## Deploy with a point-to-site VPN (Attention!: to use only if you are behind a company firewall or proxy. No guarantees it works depending by company policies.)
+
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsgiovinetti%2FCortanaWorkshopPrereqDeployment%2Fmaster%2FazuredeploywithVPN.json)
+
+After the deployment you need to install [this client certificate](https://github.com/sgiovinetti/CortanaWorkshopPrereqDeployment/raw/master/cortanademoclient.pfx) in your certificate store and download the VPN client. 
+
+The VPN client should be downloaded from Azure in the blade of the Virtual Network Gateway in the section "Point-to-Site configuration" clicking on the menu "Download VPN client".
