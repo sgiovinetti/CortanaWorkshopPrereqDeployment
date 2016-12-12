@@ -1,0 +1,409 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 10,
+      "metadata": {
+        "description": "This should be a short (10 or fewer characters), but unique string that will be a prefix to all of the resources deployed. For example, if you type in smithcis, your Spark cluster will be called smithcisspark and your Lab VM will be called smithcislab."
+      }
+    },
+    "deploymentLocation": {
+      "type": "string",
+	  "defaultValue": "westeurope",
+      "allowedValues": [        
+        "westeurope"
+      ],
+      "metadata": {
+        "description": "The default deployment location for the resources needed for the workshop. Please do not change the default value."
+      }
+    }
+  },
+
+  "variables": {
+    "clusterLoginUserName": "cortana",
+    "clusterLoginPassword": "Password.1!!",
+    "labVmUsername": "cortana",
+    "labVmPassword": "Password.1!!",
+    "cleanAppName": "[toLower(parameters('appName'))]",
+    "clusterName": "[concat(variables('cleanAppName'), 'spark')]",
+    "clusterStorageAccountName": "[concat(variables('cleanAppName'), 'sparkstorage')]",
+    "vmStorageAccountName": "[concat(variables('cleanAppName'), 'vmstorage')]",
+    "mlStorageAccountName": "[concat(variables('cleanAppName'), 'mlstorage')]",
+    "virtualNetworkName": "[concat(variables('cleanAppName'), 'labnetwork')]",
+
+	
+    "subnetName": "[concat(variables('cleanAppName'), 'subnet')]",
+    "nicName": "[concat(variables('cleanAppName'), 'nic')]",
+    "publicIPAddressName": "[concat(variables('cleanAppName'), 'publicip')]",
+	
+    "labVmName": "[concat(variables('cleanAppName'), 'lab')]",
+    "mlWorkspaceName": "[concat(variables('cleanAppName'), 'ml')]",
+    "mlResourceId": "[resourceId('Microsoft.MachineLearning/workspaces', variables('mlWorkspaceName'))]",
+    "mlStorageResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('mlStorageAccountName'))]",
+
+	"gatewayName": "[concat(variables('cleanAppName'), 'gateway')]",    
+	"gtwpublicIPAddressName": "[concat(variables('cleanAppName'), 'gtwpublicip')]",
+	"clientRootCertName": "cortanademo.cer",
+    "clientRootCertData": "MIIC+TCCAeWgAwIBAgIQR8/Xrrs4TJBB1/ZF5pHpGDAJBgUrDgMCHQUAMBYxFDASBgNVBAMTC2NvcnRhbmFkZW1vMB4XDTE2MTIxMjExMzk0NFoXDTM5MTIzMTIzNTk1OVowFjEUMBIGA1UEAxMLY29ydGFuYWRlbW8wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCkKXYnHtdGHODWAyMTxsydWWsZD0jdbQNjjwXUCS0asmEntSlixwGfBHrx7mHLnjQ096M1zAFxLcTbChK/emE2W8DszMHz193DgjsAMt7VfI8pVkMKmLg5e09zyOiU/9yDcNFvF9vZ5d6zP52MbWpycFHYKMkGRLPSGBc9SKRWNSnupTMpchNRZfiZICGqC0dmqjX4fMyt7q7AEo6scXHf8AOeh5Bpl/KAAtgQ33emcywm3e0+Fm81YHWnDbwCfuKUQPX0tmTfITF2rS/JrDgCGOMmaUz9aJHVMAeyNPxHXWW9bqCb3zmQl4JhFwhJmBFEQ+Flf3VRX/GuWyUS8ABlAgMBAAGjSzBJMEcGA1UdAQRAMD6AEPESp5xpO5gz/K+FaGOuNhyhGDAWMRQwEgYDVQQDEwtjb3J0YW5hZGVtb4IQR8/Xrrs4TJBB1/ZF5pHpGDAJBgUrDgMCHQUAA4IBAQAC32qMk4Dm+p/QuloiAYojflklAruIDsbK13JayaXX0vAXko0jLh5KFUb4dJNOkjwFmSz0JjTa867S/4cXClRdgs6RqMKcJXN37yDxClDm9A5AZABmjd3lWWP5+ScM+OV9JGziSOWVyuz5RH9vOZAAE/gITLkAt1wVTHlWLIkwL+pnkIdxS/cvcG5JMpfoBs7gzE1oSB4N0md9ks/5pwLBx/AKWaHuVNzcQqtkz5dScaOMEZfGrDnVo1J4gsgUuPVdZUqvO3EpHcEORwuBe4bfgc0EQrFI3tDzwpKXQb4nmbeiyocM09eqsYirxNiC6e0/OPpStfCIBGv+Igc0g2jM",
+    "vpnClientAddressPoolPrefix": "172.16.201.0/24",
+	"gtwsubnetPrefix": "10.0.1.0/24",
+	
+	
+	"OSDiskName": "labvmosdisk",
+    "vmOsVersion": "2012-R2-Datacenter",
+    "vmSize": "Standard_DS1_v2",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "publicIPAddressType": "Dynamic",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "clusterNodeSize": "Standard_D12_v2",
+    "clusterWorkerNodeCount": 2,
+    "mydcsConfigurationFunction": "mydcsConfiguration.ps1\\Main",
+    "dscModuleUrl": "https://github.com/sgiovinetti/CortanaWorkshopPrereqDeployment/raw/master/dsc.zip",
+    "mlLocation": "westeurope",
+
+    "clusterApiVersion": "2015-03-01-preview",
+    "storageApiVersion": "2016-01-01",
+    "networkingApiVersion": "2015-06-15",
+    "vmApiVersion": "2015-06-15",
+    "mlApiVersion": "2016-04-01"
+  },
+
+  "resources": [
+
+    // storage
+    {
+      "name": "[variables('clusterStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "[variables('storageApiVersion')]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "location": "[parameters('deploymentLocation')]"
+    },
+    {
+      "name": "[variables('vmStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "[variables('storageApiVersion')]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "location": "[parameters('deploymentLocation')]"
+    },
+    {
+      "name": "[variables('mlStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "[variables('storageApiVersion')]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "location": "[variables('mlLocation')]"
+    },
+
+    // Azure ML
+    {
+      "apiVersion": "[variables('mlApiVersion')]",
+      "type": "Microsoft.MachineLearning/workspaces",
+      "name": "[variables('mlWorkspaceName')]",
+      "location": "[variables('mlLocation')]",
+      "dependsOn": [
+        "[variables('mlStorageResourceId')]"
+      ],
+      "properties": {
+        "UserStorageAccountId": "[variables('mlStorageResourceId')]"
+      }
+    },
+
+    // networking
+    {
+      "apiVersion": "[variables('networkingApiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('deploymentLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('labVmName')]"
+        }
+      }
+    },
+	
+    {
+      "name": "[variables('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('deploymentLocation')]",
+      "apiVersion": "[variables('networkingApiVersion')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          },
+		   {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[variables('gtwsubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+	// VPN - start
+	{
+      "apiVersion": "[variables('networkingApiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('gtwpublicIPAddressName')]",
+      "location": "[parameters('deploymentLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+        }
+      },
+	  
+	 {
+      "apiVersion": "[variables('networkingApiVersion')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "[variables('gatewayName')]",
+      "location": "[parameters('deploymentLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('gtwpublicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(variables('vnetID'),'/subnets/','GatewaySubnet')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('gtwpublicIPAddressName'))]"
+              }
+            },
+            "name": "vnetGatewayConfig"
+          }
+        ],
+        "sku": {
+          "name": "Basic",
+          "tier": "Basic"
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "enableBgp": "false",
+        "vpnClientConfiguration": {
+          "vpnClientAddressPool": {
+            "addressPrefixes": [
+              "[variables('vpnClientAddressPoolPrefix')]"
+            ]
+          },
+          "vpnClientRootCertificates": [
+            {
+              "name": "[variables('clientRootCertName')]",
+              "properties": {
+                "PublicCertData": "[variables('clientRootCertData')]"
+              }
+            }
+          ]
+        }
+      }
+    },
+		
+	// VPN - end
+    {
+      "name": "[variables('nicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('deploymentLocation')]",
+      "apiVersion": "[variables('networkingApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+
+    // Lab VM
+    {
+      "name": "[variables('labVmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('deploymentLocation')]",
+      "apiVersion": "[variables('vmApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('labVmName')]",
+          "adminUsername": "[variables('labVmUsername')]",
+          "adminPassword": "[variables('labVmPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('vmOsVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('vmStorageAccountName'), '.blob.core.windows.net/vmstorage/', variables('OSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "mydcs",
+          "type": "extensions",
+          "location": "[parameters('deploymentLocation')]",
+          "apiVersion": "[variables('vmApiVersion')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('labVmName'))]"
+          ],
+          "tags": {
+            "displayName": "mydcs"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "modulesUrl": "[variables('dscModuleUrl')]",
+              "sasToken": "",
+              "configurationFunction": "[variables('mydcsConfigurationFunction')]",
+              "properties": {
+                "nodeName": "[variables('labVmName')]"
+              }
+            },
+            "protectedSettings": { }
+          }
+        }
+      ]
+    },
+
+    // HDInsight
+    {
+      "name": "[variables('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[parameters('deploymentLocation')]",
+      "apiVersion": "[variables('clusterApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('clusterStorageAccountName'))]"
+      ],
+      "properties": {
+        "clusterVersion": "3.4",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "spark",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[variables('clusterLoginUserName')]",
+              "restAuthCredential.password": "[variables('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('clusterStorageAccountName')), variables('storageApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
+              "isDefault": true,
+              "container": "sparkcontainer",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('storageApiVersion')).keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "2",
+              "hardwareProfile": {
+                "vmSize": "[variables('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[variables('clusterLoginUserName')]",
+                  "password": "[variables('clusterLoginPassword')]"
+                }
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[variables('clusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "[variables('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[variables('clusterLoginUserName')]",
+                  "password": "[variables('clusterLoginPassword')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+
+  "outputs": {
+    "mlWorkspaceObject": {
+      "type": "object",
+      "value": "[reference(variables('mlResourceId'), variables('mlApiVersion'))]"
+    },
+    "mlWorkspaceToken": {
+      "type": "object",
+      "value": "[listWorkspaceKeys(variables('mlResourceId'), variables('mlApiVersion'))]"
+    }
+  }
+}
