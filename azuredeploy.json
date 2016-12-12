@@ -13,7 +13,7 @@
     },
     "deploymentLocation": {
       "type": "string",
-	  "defaultValue": "westeurope"
+	  "defaultValue": "westeurope",
       "allowedValues": [        
         "westeurope"
       ],
