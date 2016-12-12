@@ -55,7 +55,7 @@
     "clusterNodeSize": "Standard_D12_v2",
     "clusterWorkerNodeCount": 2,
     "mydcsConfigurationFunction": "mydcsConfiguration.ps1\\Main",
-    "dscModuleUrl": "https://raw.github.com/sgiovinetti/CortanaWorkshopPrereqDeployment/master/dsc.zip",
+    "dscModuleUrl": "https://raw.github.com/sgiovinetti/CortanaWorkshopPrereqDeployment/dsc.zip",
     "mlLocation": "westeurope",
 
     "clusterApiVersion": "2015-03-01-preview",
