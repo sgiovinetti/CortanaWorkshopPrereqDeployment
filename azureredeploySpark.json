@@ -1,0 +1,127 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 10,
+      "metadata": {
+        "description": "This should be equal to the name you gave when you did your initial deployment."
+      }
+    }
+  },
+
+  "variables": {
+	"deploymentLocation":  "westeurope",
+    "clusterLoginUserName": "cortana",
+    "clusterLoginPassword": "Password.1!!",
+    "labVmUsername": "cortana",
+    "labVmPassword": "Password.1!!",
+    "cleanAppName": "[toLower(parameters('appName'))]",
+    "clusterName": "[concat(variables('cleanAppName'), 'spark')]",
+    "clusterStorageAccountName": "[concat(variables('cleanAppName'), 'sparkstorage')]",
+    "vmStorageAccountName": "[concat(variables('cleanAppName'), 'vmstorage')]",
+    "mlStorageAccountName": "[concat(variables('cleanAppName'), 'mlstorage')]",
+    "virtualNetworkName": "[concat(variables('cleanAppName'), 'labnetwork')]",
+    "subnetName": "[concat(variables('cleanAppName'), 'subnet')]",
+    "nicName": "[concat(variables('cleanAppName'), 'nic')]",
+    "publicIPAddressName": "[concat(variables('cleanAppName'), 'publicip')]",
+    "labVmName": "[concat(variables('cleanAppName'), 'lab')]",
+    "mlWorkspaceName": "[concat(variables('cleanAppName'), 'ml')]",
+    "mlResourceId": "[resourceId('Microsoft.MachineLearning/workspaces', variables('mlWorkspaceName'))]",
+    "mlStorageResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('mlStorageAccountName'))]",
+
+    "OSDiskName": "labvmosdisk",
+    "vmOsVersion": "2012-R2-Datacenter",
+    "vmSize": "Standard_DS1_v2",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "publicIPAddressType": "Dynamic",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "clusterNodeSize": "Standard_D12_v2",
+    "clusterWorkerNodeCount": 2,
+    "mydcsConfigurationFunction": "mydcsConfiguration.ps1\\Main",
+    "dscModuleUrl": "https://github.com/sgiovinetti/CortanaWorkshopPrereqDeployment/raw/master/dsc.zip",
+    "mlLocation": "westeurope",
+
+    "clusterApiVersion": "2015-03-01-preview",
+    "storageApiVersion": "2016-01-01",
+    "networkingApiVersion": "2015-06-15",
+    "vmApiVersion": "2015-06-15",
+    "mlApiVersion": "2016-04-01"
+  },
+
+  "resources": [
+
+   
+    // HDInsight
+    {
+      "name": "[variables('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[variables('deploymentLocation')]",
+      "apiVersion": "[variables('clusterApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('clusterStorageAccountName'))]"
+      ],
+      "properties": {
+        "clusterVersion": "3.4",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "spark",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[variables('clusterLoginUserName')]",
+              "restAuthCredential.password": "[variables('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('clusterStorageAccountName')), variables('storageApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
+              "isDefault": true,
+              "container": "sparkcontainer",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('storageApiVersion')).keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "2",
+              "hardwareProfile": {
+                "vmSize": "[variables('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[variables('clusterLoginUserName')]",
+                  "password": "[variables('clusterLoginPassword')]"
+                }
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[variables('clusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "[variables('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[variables('clusterLoginUserName')]",
+                  "password": "[variables('clusterLoginPassword')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

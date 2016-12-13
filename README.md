@@ -29,7 +29,9 @@ When you click the "Deploy to Azure" button, you will be taken to the Azure port
 * **Deployment Location** - The default deployment location for the resources needed for the workshop.
 
 The credentials for accessing the VM and the Spark Cluster are: 
+
 Userid: cortana
+
 PWD: Password.1!!
 
 
@@ -40,3 +42,8 @@ PWD: Password.1!!
 After the deployment you need to install [this client certificate](https://github.com/sgiovinetti/CortanaWorkshopPrereqDeployment/raw/master/cortanademoclient.pfx) in your certificate store using Pwd: cortanademo 
 
 After that you need to download the VPN client from Azure in the blade of the Virtual Network Gateway in section "Point-to-Site configuration" clicking on the menu "Download VPN client".
+
+
+## Redeploy the HDInsight Spark Node (To use only after the deletion of the node.)
+
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsgiovinetti%2FCortanaWorkshopPrereqDeployment%2Fmaster%2FazureredeploySpark.json)
